@@ -128,37 +128,51 @@ full_joint[dict(국어=f, 영어=t, 수학=f, 인공지능=f)] = 0.06
 full_joint[dict(국어=f, 영어=f, 수학=f, 인공지능=f)] = 0.04
 
 
-# 쿼리문1
-# P(인공지능=True)인 경우 조건부 확률
+# 쿼리문1************************************************************
+# P(인공지능=True)
 evidence = dict(인공지능=t)
 variables = ['국어','영어', '수학']     # 증거에 포함되지 않은 변수들
 ans1 = enumerate_joint(variables, evidence, full_joint)
-print('인공지능 시험을 잘봤을 확률(국영수는 고려X):', ans1)
+print('<쿼리문1: 인공지능 시험을 잘봤을 확률은?>')
+print('P(인공지능=True) = ', ans1)
+print()
 
-# 쿼리문2
-# P(국어=f, 인공지능=t)                         # 여기서부터 다시 시작하기~~~~~~~~~~~~~~~~~~~~~~~~~
+# 쿼리문2************************************************************
+# P(국어=f, 인공지능=t)
 evidence = dict(국어=f,  인공지능=t)
-variables = [''] # 증거에 포함되지 않은 변수들
+variables = ['영어', '수학'] # 증거에 포함되지 않은 변수들
 ans2 = enumerate_joint(variables, evidence, full_joint)
-print('캐피티가참, 투쓰에이크가참일때의 확률', ans2)
+print('<쿼리문2: 국어 시험을 못보고, 인공지능 시험을 잘봤을 확률은?>')
+print('P(국어=f, 인공지능=t) = ', ans2)
+print()
 
-# 이를 활용한 조건부확률 구하기
-# P(Cavity=True | Toothache=True) = P(Cavity=True and Toothache=True) / P(Toothache=True)
-# ans2/ans1
+# 이를 활용한 조건부확률 구하기************************************************************
+# P(국어=False | 인공지능=True) = P( 국어=False and 인공지능=True) / P(인공지능=True) )
+print('<쿼리문3: 인공지능 시험을 잘봤을때, 국어시험을 못볼 확률은?>')
+print("P(국어=False | 인공지능=True) = ", ans2/ans1)
+print()
 
-# 쿼리문3
-# P(Cavity | Toothache=True)
-# query_variable = 'Cavity'
-# evidence = dict(Toothache=True)
-# ans = enumerate_joint_ask(query_variable, evidence, full_joint)
-# (ans[True], ans[False])
+# 쿼리문4 인공지능, 국어를 잘봤을떄, 영어 또는 수학이 망할 확률************************************************************
+# P(영어=False OR 수학=False | 인공지능=True and 국어=True)
+# 조건부 확률에서 전제조건 에 해당하는 인공지능=True and 국어=True 먼저 구한다
+evidence = dict(인공지능=t, 국어=t)
+variables = ['영어', '수학']     # 증거에 포함되지 않은 변수들
+ans1 = enumerate_joint(variables, evidence, full_joint)
 
+# '영어=False'에 대한 조건부 확률 계산
+evidence1 = dict(인공지능= t, 국어= t, 영어= f)
+variables1 = ['수학']  # 증거에 포함되지 않은 변수들
+prob_not_english = enumerate_joint(variables1, evidence1, full_joint)
 
+# '수학=False'에 대한 조건부 확률 계산
+evidence2 = dict(인공지능=t, 국어= t, 수학= f)
+variables2 = ['영어']  # 증거에 포함되지 않은 변수들
+prob_not_math = enumerate_joint(variables2, evidence2, full_joint)
 
+# OR 연산을 통한 결과 계산(A+B - A*B를 통해 합집합의 확률을 구한다.)
+prob_result = prob_not_english + prob_not_math - (prob_not_english * prob_not_math)
+print('<쿼리문4: 인공지능, 국어시험을 동시에 잘봤을때, 영어 또는 수학시험을 못봤을 확률은?>')
 
-# 여기서부터 구현을 시작한다(국어, 영어, 수학, 인공지능 시험을 잘볼 확률을 비교)
-# 잘보면 True, 못보면 False를 의미한다
-
-
-# 완전결합 확률의 합은 1.0이 되게 한다.
-#print(sum([0.02,0.13, 0.02, 0.01, 0.12, 0.08, 0.13, 0.04, 0.03, 0.04, 0.07, 0.08, 0.1, 0.03, 0.06, 0.04]))
+# 1에 거의 근접한 확률이 나온다(부동소수점 오류 있어서 1을 넘는다.)
+print('P(영어=False or 수학=False | 인공지능=True and 국어=True)=', prob_result/ans1)
+print('1에 근접한 숫자 이지만, 부동소수점 오류 때문에 1을 넘어간다!')
